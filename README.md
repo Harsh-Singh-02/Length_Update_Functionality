@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## See it
 
 This repository includes an example application built using blueprint3d:
@@ -21,14 +20,6 @@ This is a customizable application built on three.js that allows users to design
 
 ![3d_design](https://s3.amazonaws.com/furnishup/design.png)
 
-## Developing and Running Locally
-
-To get started, clone the repository and ensure you npm >= 3 and grunt installed, then run:
-
-    npm install
-    grunt
-
-The latter command generates `example/js/blueprint3d.js` from `src`.
 
 The easiest way to run locally is to run a local server from the `example` directory. There are plenty of options. One uses Python's built in webserver:
 
@@ -88,7 +79,3 @@ The example directory contains an application built using the core blueprint3d j
 ## License
 
 This project is open-source! See LICENSE.txt for more information.
-=======
-# Length_Update_Functionality
-Length of selected walls can be updated based on user input in the 2d floorplan.
->>>>>>> origin/main
