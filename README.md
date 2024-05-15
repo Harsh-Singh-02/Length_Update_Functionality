@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## See it
 
 This repository includes an example application built using blueprint3d:
@@ -87,3 +88,7 @@ The example directory contains an application built using the core blueprint3d j
 ## License
 
 This project is open-source! See LICENSE.txt for more information.
+=======
+# Length_Update_Functionality
+Length of selected walls can be updated based on user input in the 2d floorplan.
+>>>>>>> origin/main
