@@ -785,6 +785,7 @@ var BP3D;
              * @param dy The delta y.
              */
             Corner.prototype.relativeMove = function (dx, dy) {
+                // console.log(this.x,this.y,dx,dy)
                 this.move(this.x + dx, this.y + dy);
             };
             Corner.prototype.fireAction = function (action) {
@@ -1197,7 +1198,7 @@ var BP3D;
              */
             HalfEdge.prototype.corners = function () {
                 return [this.interiorStart(), this.interiorEnd(),
-                    this.exteriorEnd(), this.exteriorStart()];
+                this.exteriorEnd(), this.exteriorStart()];
             };
             /**
              * Gets CCW angle from v1 to v2
@@ -2661,6 +2662,8 @@ var BP3D;
             };
             /** */
             FloorplannerView.prototype.draw = function () {
+                //  console.log(this)
+
                 var _this = this;
                 this.context.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
                 this.drawGrid();
@@ -2674,6 +2677,7 @@ var BP3D;
                     _this.drawCorner(corner);
                 });
                 if (this.viewmodel.mode == Floorplanner.floorplannerModes.DRAW) {
+                    console.log(this.viewmodel.lastNode)
                     this.drawTarget(this.viewmodel.targetX, this.viewmodel.targetY, this.viewmodel.lastNode);
                 }
                 this.floorplan.getWalls().forEach(function (wall) {
@@ -2864,6 +2868,8 @@ var BP3D;
                 this.mode = 0;
                 /** */
                 this.activeWall = null;
+
+                this.recentActiveWall = null;
                 /** */
                 this.activeCorner = null;
                 /** */
@@ -2904,6 +2910,11 @@ var BP3D;
                 // Initialization:
                 this.setMode(Floorplanner_1.floorplannerModes.MOVE);
                 var scope = this;
+
+                //creating a instance for later use as in length update of wall
+                this.floorplanInstance = Floorplanner_1;
+
+
                 this.canvasElement.mousedown(function () {
                     scope.mousedown();
                 });
@@ -2925,12 +2936,99 @@ var BP3D;
                     scope.reset();
                 });
             }
+
+            // Code for editing length from user input
+            Floorplanner.prototype.updateLengthOfWall = function (length) {
+                this.activeCorner = this.recentActiveWall.end;
+                length_in_cm = length * (30.48);
+
+                //    start_X = this.recentActiveWall.start.x;
+                //    start_Y = this.recentActiveWall.start.y;
+                //    end_X = this.recentActiveWall.end.x;
+                //    end_Y = this.recentActiveWall.end.y; 
+
+                //    length_in_pix = length*(15.0);
+                //    console.log(length_in_pix)
+                //    curr_length_in_pix = Math.sqrt(Math.pow(end_X-start_X,2) + Math.pow(end_Y-start_Y,2));
+                //    delta_x = (length_in_pix*(end_X-start_X))/curr_length_in_pix;
+                //    delta_y = (length_in_pix*(end_Y-start_Y))/curr_length_in_pix;
+                //    new_X = start_X+delta_x;
+                //    new_Y = start_Y+delta_y;
+
+                //    console.log(curr_length_in_pix);
+
+
+                curr_length_in_cm = 0;
+                wall = this.recentActiveWall;
+
+                var start = wall.getStart();
+                var end = wall.getEnd();
+                if (wall.backEdge && wall.frontEdge) {
+                    if (wall.backEdge.interiorDistance < wall.frontEdge.interiorDistance) {
+                        curr_length_in_cm = wall.backEdge.interiorDistance();
+                        // start = wall.backEdge.interiorStart();
+                        // end = wall.backEdge.interiorEnd();
+                    } else {
+                        curr_length_in_cm = wall.frontEdge.interiorDistance();
+                        // start = wall.frontEdge.interiorStart();
+                        // end = wall.frontEdge.interiorEnd();
+                    }
+                } else if (wall.backEdge) {
+                    curr_length_in_cm = wall.backEdge.interiorDistance();
+                    // start = wall.backEdge.interiorStart();
+                    // end = wall.backEdge.interiorEnd();
+                } else if (wall.frontEdge) {
+                    curr_length_in_cm = wall.frontEdge.interiorDistance();
+                    // start = wall.frontEdge.interiorStart();
+                    // end = wall.frontEdge.interiorEnd();
+                }
+                // console.log(start.x,start.y);
+                // console.log(end.x,end.y);
+                delta_x = (length_in_cm * (end.x - start.x)) / curr_length_in_cm;
+                delta_y = (length_in_cm * (end.y - start.y)) / curr_length_in_cm;
+                new_X = start.x + delta_x;
+                new_Y = start.y + delta_y;
+                console.log(new_X, new_Y);
+                this.activeCorner.move(new_X, new_Y);
+            };
+
+
+
+            // Event listener for form submission
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('lengthForm');
+                const lengthInput = document.getElementById('lengthInput');
+
+                if (form instanceof HTMLFormElement && lengthInput instanceof HTMLInputElement) {
+                    form.addEventListener('submit', (event) => {
+                        event.preventDefault(); // Prevent default form submission
+                        const length = parseFloat(lengthInput.value); // Get the length input value
+                        // updateLength(length); // Call the update function with the length
+                        lengthInput.value = ''; // Clear the input field after submission
+                        console.log(length);
+                        console.log(floorplanInstance)
+                        if (floorplanInstance.recentActiveWall != null) {
+
+                            floorplanInstance.updateLengthOfWall(length);
+                            floorplanInstance.view.draw();
+                        }
+                        else {
+                            console.log("Select a wall before entering the length")
+                        }
+                        // console.log(recentActiveWall_1)
+                    });
+                }
+            });
+
             /** */
             Floorplanner.prototype.escapeKey = function () {
                 this.setMode(Floorplanner_1.floorplannerModes.MOVE);
             };
             /** */
             Floorplanner.prototype.updateTarget = function () {
+                // console.log(this.targetX)
+                // console.log(this.mouseX)
+                // console.log(this)
                 if (this.mode == Floorplanner_1.floorplannerModes.DRAW && this.lastNode) {
                     if (Math.abs(this.mouseX - this.lastNode.x) < snapTolerance) {
                         this.targetX = this.lastNode.x;
@@ -2949,20 +3047,38 @@ var BP3D;
                     this.targetX = this.mouseX;
                     this.targetY = this.mouseY;
                 }
+                // console.log(this)
+                floorplanInstance = this;
                 this.view.draw();
             };
             /** */
             Floorplanner.prototype.mousedown = function () {
+                // console.log("CCC")
                 this.mouseDown = true;
                 this.mouseMoved = false;
                 this.lastX = this.rawMouseX;
                 this.lastY = this.rawMouseY;
                 // delete
+                console.log(this.activeCorner)
+                console.log(this.activeWall)
+
+                if (this.activeWall) {
+                    this.recentActiveWall = this.activeWall;
+                    // recentActiveWall_1=this.activeWall;
+                }
+
+                console.log(this)
+
                 if (this.mode == Floorplanner_1.floorplannerModes.DELETE) {
+
                     if (this.activeCorner) {
                         this.activeCorner.removeAll();
                     }
                     else if (this.activeWall) {
+                        if (this.recentActiveWall == this.activeWall) {
+                            this.recentActiveWall = null;
+
+                        }
                         this.activeWall.remove();
                     }
                     else {
@@ -2974,8 +3090,10 @@ var BP3D;
             Floorplanner.prototype.mousemove = function (event) {
                 this.mouseMoved = true;
                 // update mouse
+                // console.log("abc")
                 this.rawMouseX = event.clientX;
                 this.rawMouseY = event.clientY;
+                // console.log(this.canvasElement)
                 this.mouseX = (event.clientX - this.canvasElement.offset().left) * this.cmPerPixel + this.originX * this.cmPerPixel;
                 this.mouseY = (event.clientY - this.canvasElement.offset().top) * this.cmPerPixel + this.originY * this.cmPerPixel;
                 // update target (snapped position of actual mouse)
@@ -2983,6 +3101,7 @@ var BP3D;
                     this.updateTarget();
                 }
                 // update object target
+                // console.log(this)
                 if (this.mode != Floorplanner_1.floorplannerModes.DRAW && !this.mouseDown) {
                     var hoverCorner = this.floorplan.overlappedCorner(this.mouseX, this.mouseY);
                     var hoverWall = this.floorplan.overlappedWall(this.mouseX, this.mouseY);
